@@ -6,7 +6,7 @@
 # implementation for the Programming the Internet of Things exercises,
 # and designed to be modified by the student as needed.
 #
-
+#
 import programmingtheiot.common.ConfigConst as ConfigConst
 
 class BaseSystemUtilTask():
