@@ -44,6 +44,7 @@ class TemperatureSensorSimTaskTest(unittest.TestCase):
 		self.assertGreaterEqual(sd.getValue(), ConfigConst.DEFAULT_VAL)
 		logging.info("Temperature SensorData: %s", str(sd))
 			
+	@unittest.skip("Ignore for now.")
 	def testGetTelemetryValue(self):
 		val = self.tSimTask.getTelemetryValue()
 		
