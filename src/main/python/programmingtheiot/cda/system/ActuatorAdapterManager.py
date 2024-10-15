@@ -58,6 +58,21 @@ class ActuatorAdapterManager(object):
 		
 		# create the HVAC actuator
 			self.hvacActuator = HvacActuatorSimTask()
+		else:
+			# create the humidifier actuator emulator
+			hueModule = import_module('programmingtheiot.cda.emulated.HumidifierEmulatorTask', 'HumidiferEmulatorTask')
+			hueClazz = getattr(hueModule, 'HumidifierEmulatorTask')
+			self.humidifierActuator = hueClazz()
+		
+			# create the HVAC actuator emulator
+			hveModule = import_module('programmingtheiot.cda.emulated.HvacEmulatorTask', 'HvacEmulatorTask')
+			hveClazz = getattr(hveModule, 'HvacEmulatorTask')
+			self.hvacActuator = hveClazz()
+		
+			# create the LED display actuator emulator
+			leDisplayModule = import_module('programmingtheiot.cda.emulated.LedDisplayEmulatorTask', 'LedDisplayEmulatorTask')
+			leClazz = getattr(leDisplayModule, 'LedDisplayEmulatorTask')
+			self.ledDisplayActuator = leClazz()
 	def sendActuatorCommand(self, data: ActuatorData) -> bool:
 		if data and not data.isResponseFlagEnabled():
 		# first check if the actuation event is destined for this device
