@@ -37,10 +37,20 @@ class DataUtil():
 		return jsonData
 	
 	def sensorDataToJson(self, data: SensorData = None, useDecForFloat: bool = False):
-		pass
+		if not data:
+			logging.debug("SensorData is null. Returning empty string.")
+			return ""
+		
+		jsonData = self._generateJsonData(obj = data, useDecForFloat = False)
+		return jsonData
 
 	def systemPerformanceDataToJson(self, data: SystemPerformanceData = None, useDecForFloat: bool = False):
-		pass
+		if not data:
+			logging.debug("SystemPerfomanceData is null. Returning empty string.")
+			return ""
+		
+		jsonData = self._generateJsonData(obj = data, useDecForFloat = False)
+		return jsonData
 	
 	def jsonToActuatorData(self, jsonData: str = None, useDecForFloat: bool = False):
 		if not jsonData:
@@ -53,10 +63,24 @@ class DataUtil():
 		return ad
 	
 	def jsonToSensorData(self, jsonData: str = None, useDecForFloat: bool = False):
-		pass
+		if not jsonData:
+			logging.warning("JSON data is empty or null. Returning null.")
+			return None
+		
+		jsonStruct = self._formatDataAndLoadDictionary(jsonData, useDecForFloat = useDecForFloat)
+		ad = SensorData()
+		self._updateIotData(jsonStruct, ad)
+		return ad
 	
 	def jsonToSystemPerformanceData(self, jsonData: str = None, useDecForFloat: bool = False):
-		pass
+		if not jsonData:
+			logging.warning("JSON data is empty or null. Returning null.")
+			return None
+		
+		jsonStruct = self._formatDataAndLoadDictionary(jsonData, useDecForFloat = useDecForFloat)
+		ad = SystemPerformanceData()
+		self._updateIotData(jsonStruct, ad)
+		return ad
 	def _formatDataAndLoadDictionary(self, jsonData: str, useDecForFloat: bool = False) -> dict:
 		jsonData = jsonData.replace("\'", "\"").replace('False', 'false').replace('True', 'true')
 		
