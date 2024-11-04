@@ -224,6 +224,7 @@ class DeviceDataManager(IDataMessageListener):
 			self.sensorAdapterMgr.startManager()
 		
 		logging.info("Started DeviceDataManager.")
+		#if self.mqtt is none then call to  self.mqttClient.connectClient() and ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE as the resource and QoS is from 0-2 alos subscribes the client on connection
 		if self.mqttClient:
 			self.mqttClient.connectClient()
 			self.mqttClient.subscribeToTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, callback = None, qos = ConfigConst.DEFAULT_QOS)
@@ -238,6 +239,7 @@ class DeviceDataManager(IDataMessageListener):
 			self.sensorAdapterMgr.stopManager()
 		
 		logging.info("Stopped DeviceDataManager.")
+		#if self.mqtt is none then call to  self.mqttClient.disconnectClient() and unsubscribe the client
 		if self.mqttClient:
 			self.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE)
 			self.mqttClient.disconnectClient()
