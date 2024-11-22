@@ -120,8 +120,8 @@ class MqttClientControlPacketTest(unittest.TestCase):
     def testPingReq(self):
         """Test MQTT PINGREQ packet."""
         logging.info("Testing MQTT PINGREQ packet...")
-        # The client will automatically send PINGREQ when idle (no need to manually invoke).
-        pass
+        self.ensureConnected()  # Ensure connection before testing
+        sleep(65)  # Allow time for PINGREQ to be sent (based on the 60-second keepalive interval)
 
     def testPingResp(self):
         """Test MQTT PINGRESP packet."""
