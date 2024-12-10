@@ -187,6 +187,10 @@ class DeviceDataManager(IDataMessageListener):
 		if data:
 			logging.debug("Incoming sensor data received (from sensor manager): " + str(data))
 			self._handleSensorDataAnalysis(data)
+			jsonData = DataUtil().sensorDataToJson(data = data)
+		
+			# Pass the resource and newly generated JSON data to `_handleUpstreamTransmission()`
+			self._handleUpstreamTransmission(resource = ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, msg = jsonData)
 			return True
 		else:
 			logging.warning("Incoming sensor data is invalid (null). Ignoring.")
@@ -283,11 +287,25 @@ class DeviceDataManager(IDataMessageListener):
 			# task implementations, and not this function
 			self.handleActuatorCommandMessage(ad)
 		
-	def _handleUpstreamTransmission(self, resourceName: ResourceNameEnum, msg: str):
+	def _handleUpstreamTransmission(self, resource = None, msg: str = None):
 		"""
 		Call this from handleActuatorCommandResponse(), handlesensorMessage(), and handleSystemPerformanceMessage()
 		to determine if the message should be sent upstream. Steps to take:
 		1) Check connection: Is there a client connection configured (and valid) to a remote MQTT or CoAP server?
 		2) Act on msg: If # 1 is true, send message upstream using one (or both) client connections.
 		"""
-		pass
+		logging.info("Upstream transmission invoked. Checking comm's integration.")
+	
+		# NOTE: If using MQTT, the following will attempt to publish the message to the broker
+		if self.mqttClient:
+			if self.mqttClient.publishMessage(resource = resource, msg = msg):
+				logging.debug("Published incoming data to resource (MQTT): %s", str(resource))
+			else:
+				logging.warning("Failed to publish incoming data to resource (MQTT): %s", str(resource))
+	
+		# NOTE: If using CoAP, the following will attempt to PUT the message to the server
+		if self.coapClient:
+			if self.coapClient.sendPutRequest(resource = resource, payload = msg):
+				logging.debug("Put incoming message data to resource (CoAP): %s", str(resource))
+			else:
+				logging.warning("Failed to put incoming message data to resource (CoAP): %s", str(resource))

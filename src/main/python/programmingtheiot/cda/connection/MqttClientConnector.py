@@ -9,12 +9,13 @@
 
 import logging
 import paho.mqtt.client as mqttClient
-
+import ssl
 import programmingtheiot.common.ConfigConst as ConfigConst
 
 from programmingtheiot.common.ConfigUtil import ConfigUtil
 from programmingtheiot.common.IDataMessageListener import IDataMessageListener
 from programmingtheiot.common.ResourceNameEnum import ResourceNameEnum
+from programmingtheiot.data.DataUtil import DataUtil
 
 from programmingtheiot.cda.connection.IPubSubClient import IPubSubClient
 
@@ -48,6 +49,14 @@ class MqttClientConnector(IPubSubClient):
 				ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.DEFAULT_QOS_KEY, ConfigConst.DEFAULT_QOS)
 	
 		self.mqttClient = None
+
+		self.enableEncryption = \
+			self.config.getBoolean( \
+				ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.ENABLE_CRYPT_KEY)
+
+		self.pemFileName = \
+			self.config.getProperty( \
+				ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.CERT_FILE_KEY)
 	
 		# sets client id from piotconfig and configconst
 		if not clientID:
@@ -66,13 +75,33 @@ class MqttClientConnector(IPubSubClient):
 		if not self.mqttClient:
 			# TODO: make clean_session configurable
 			self.mqttClient = mqttClient.Client(client_id = self.clientID, clean_session = True)
-		    #defines MQTT client medthods for connection, disconnection, messages, publishing and susbscribing 
+			try:
+				if self.enableEncryption:
+					logging.info("Enabling TLS encryption...")
+				
+					self.port = \
+						self.config.getInteger( \
+							ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.SECURE_PORT_KEY, ConfigConst.DEFAULT_MQTT_SECURE_PORT)
+				
+					# IMPORTANT NOTE: Check your Python version for the version
+					# of TLS supported in the `ssl` module. It may need to be
+					# changed from what is indicated below.
+					# 
+					# see https://docs.python.org/3/library/ssl.html for more options.
+					self.mqttClient.tls_set(self.pemFileName, tls_version = ssl.PROTOCOL_TLS_CLIENT)
+			except:
+				logging.warning("Failed to enable TLS encryption. Using unencrypted connection.")
+			
+			
+			
+			
+			#defines MQTT client medthods for connection, disconnection, messages, publishing and susbscribing 
 			self.mqttClient.on_connect = self.onConnect
 			self.mqttClient.on_disconnect = self.onDisconnect
 			self.mqttClient.on_message = self.onMessage
 			self.mqttClient.on_publish = self.onPublish
 			self.mqttClient.on_subscribe = self.onSubscribe
-	  #defines on what happens when the clients connection 
+	  		#defines on what happens when the clients connection 
 		if not self.mqttClient.is_connected():
 			logging.info('MQTT client connecting to broker at host: ' + self.host)
 			self.mqttClient.connect(self.host, self.port, self.keepAlive)
@@ -100,6 +129,12 @@ class MqttClientConnector(IPubSubClient):
 	def onConnect(self, client, userdata, flags, rc):
 		#logs message that says MQTT connects to broker
 		logging.info('MQTT client connected to broker: ' + str(client))
+		self.mqttClient.subscribe( \
+			topic = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value, qos = self.defaultQos)
+	
+		self.mqttClient.message_callback_add( \
+			sub = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value, \
+			callback = self.onActuatorCommandMessage)
 		
 	def onDisconnect(self, client, userdata, rc):
 		#logs message that says MQTT disconnects from broker
@@ -137,7 +172,16 @@ class MqttClientConnector(IPubSubClient):
 		@param userdata The user reference context.
 		@param msg The message context, including the embedded payload.
 		"""
-		pass
+		logging.info('[Callback] Actuator command message received. Topic: %s.', msg.topic)
+	
+		if self.dataMsgListener:
+			try:
+			# assumes all data is encoded using UTF-8 (between GDA and CDA)
+				actuatorData = DataUtil().jsonToActuatorData(msg.payload.decode('utf-8'))
+			
+				self.dataMsgListener.handleActuatorCommandMessage(actuatorData)
+			except:
+				logging.exception("Failed to convert incoming actuation command payload to ActuatorData: ")
 	
 	def publishMessage(self, resource: ResourceNameEnum = None, msg: str = None, qos: int = ConfigConst.DEFAULT_QOS):
 		# Validity of resource checker
@@ -156,7 +200,7 @@ class MqttClientConnector(IPubSubClient):
 	
 		# publishes message, then waits for publish to complete before returning true
 		msgInfo = self.mqttClient.publish(topic = resource.value, payload = msg, qos = qos)
-		msgInfo.wait_for_publish()
+		#msgInfo.wait_for_publish()
 	
 		return True
 	
