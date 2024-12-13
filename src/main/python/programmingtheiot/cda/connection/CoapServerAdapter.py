@@ -28,7 +28,13 @@ from programmingtheiot.common.IDataMessageListener import IDataMessageListener
 from programmingtheiot.cda.connection.handlers.GetTelemetryResourceHandler import GetTelemetryResourceHandler
 from programmingtheiot.cda.connection.handlers.UpdateActuatorResourceHandler import UpdateActuatorResourceHandler
 from programmingtheiot.cda.connection.handlers.GetSystemPerformanceResourceHandler import GetSystemPerformanceResourceHandler
-
+from programmingtheiot.cda.connection.handlers.SensorResourceHandlers import SensorResourceHandlers 
+from programmingtheiot.cda.connection.handlers.ActuatorResourceHandlers import ActuatorResourceHandlers 
+from programmingtheiot.cda.sim.HvacActuatorSimTask import HvacActuatorSimTask
+from programmingtheiot.cda.sim.HumidifierActuatorSimTask import HumidifierActuatorSimTask
+from programmingtheiot.cda.sim.PressureSensorSimTask import PressureSensorSimTask
+from programmingtheiot.cda.sim.TemperatureSensorSimTask import TemperatureSensorSimTask
+from programmingtheiot.cda.sim.HumiditySensorSimTask import HumiditySensorSimTask
 class CoapServerAdapter():
 	"""
 	Definition for a CoAP communications server, with embedded test functions.
@@ -83,17 +89,39 @@ class CoapServerAdapter():
 				endName = ConfigConst.HUMIDIFIER_ACTUATOR_NAME, \
 				resource = UpdateActuatorResourceHandler(dataMsgListener = self.dataMsgListener))
 			
-			# TODO: add other actuator resource handlers (for HVAC, etc.)
-		
+			self.addResource(
+                resourcePath="/actuator/hvac",
+                endName=ConfigConst.HVAC_ACTUATOR_NAME,
+                resource=UpdateActuatorResourceHandler(dataMsgListener=self.dataMsgListener)
+            )
+			self.addResource(
+                resourcePath="/actuator/humidifier",
+                endName=ConfigConst.HUMIDIFIER_ACTUATOR_NAME,
+                resource=UpdateActuatorResourceHandler(dataMsgListener=self.dataMsgListener)
+            )
+			
 			sysPerfDataListener = GetSystemPerformanceResourceHandler()
+
 
 			self.addResource( \
 				resourcePath = ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, \
 				resource = sysPerfDataListener)
 		
-			# TODO: add other telemetry resource handlers (for SensorData)
+			self.addResource(
+                resourcePath="/sensor/pressure",
+                resource=SensorResourceHandlers(sensorTask=PressureSensorSimTask(), dataMsgListener=self.dataMsgListener)
+            )
 		
-			# TODO: register the callbacks with the data message listener instance
+			self.addResource(
+                resourcePath="/sensor/temperature",
+                resource=SensorResourceHandlers(sensorTask=TemperatureSensorSimTask(), dataMsgListener=self.dataMsgListener)
+            )
+			self.addResource(
+                resourcePath="/sensor/humidity",
+                resource=SensorResourceHandlers(sensorTask=HumiditySensorSimTask(), dataMsgListener=self.dataMsgListener)
+            )
+			self.registerCallbacksWithListener()
+
 		
 			logging.info("Created CoAP server with default resources.")
 		except Exception as e:
@@ -147,5 +175,16 @@ class CoapServerAdapter():
 				self.coapServer.root[registrationPath] = resource
 		else:
 			logging.warning("No resource provided for path: " + str(resourcePath.value))
+	def registerCallbacksWithListener(self):
+			"""Register callbacks with the data message listener."""
+			if self.dataMsgListener:
+				self.dataMsgListener.add_callback("HVAC_ACTUATOR", self.handleHvacCallback)
+				self.dataMsgListener.add_callback("HUMIDIFIER_ACTUATOR", self.handleHumidifierCallback)
+				self.dataMsgListener.add_callback("SENSOR_PRESSURE", self.handlePressureSensorCallback)
+				self.dataMsgListener.add_callback("SENSOR_TEMPERATURE", self.handleTemperatureSensorCallback)
+				self.dataMsgListener.add_callback("SENSOR_HUMIDITY", self.handleHumiditySensorCallback)
+				logging.info("Callbacks registered with data message listener.")
+			else:
+				logging.warning("Data message listener not set.")
 	def setDataMessageListener(self, listener: IDataMessageListener = None) -> bool:
 		pass
