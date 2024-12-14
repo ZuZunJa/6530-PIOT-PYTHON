@@ -28,8 +28,11 @@ from programmingtheiot.common.IDataMessageListener import IDataMessageListener
 from programmingtheiot.cda.connection.handlers.GetTelemetryResourceHandler import GetTelemetryResourceHandler
 from programmingtheiot.cda.connection.handlers.UpdateActuatorResourceHandler import UpdateActuatorResourceHandler
 from programmingtheiot.cda.connection.handlers.GetSystemPerformanceResourceHandler import GetSystemPerformanceResourceHandler
-from programmingtheiot.cda.connection.handlers.SensorResourceHandlers import SensorResourceHandlers 
-from programmingtheiot.cda.connection.handlers.ActuatorResourceHandlers import ActuatorResourceHandlers 
+from programmingtheiot.cda.connection.handlers.SensorResourceHandlers import PressureSensorResourceHandler 
+from programmingtheiot.cda.connection.handlers.SensorResourceHandlers import TemperatureSensorSimTask
+from programmingtheiot.cda.connection.handlers.SensorResourceHandlers import HumiditySensorSimTask
+from programmingtheiot.cda.connection.handlers.ActuatorResourceHandlers import HvacActuatorSimTask
+from programmingtheiot.cda.connection.handlers.ActuatorResourceHandlers import HumidifierActuatorSimTask
 from programmingtheiot.cda.sim.HvacActuatorSimTask import HvacActuatorSimTask
 from programmingtheiot.cda.sim.HumidifierActuatorSimTask import HumidifierActuatorSimTask
 from programmingtheiot.cda.sim.PressureSensorSimTask import PressureSensorSimTask
@@ -53,16 +56,17 @@ class CoapServerAdapter():
 		self.coapServer     = None
 		self.coapServerTask = None
 	
-		# NOTE: the self.rootResource = None only used for aiocoap
-		self.rootResource   = None
+		
+		
 	
 		# NOTE: the self.listenTimeout = 30 only used for CoAPthon3
 		self.listenTimeout = 30
+
+		
 	
 		logging.info("CoAP server configured for host and port: coap://%s:%s", self.host, str(self.port))
 		
-	def addResource(self, resourcePath: ResourceNameEnum = None, endName: str = None, resource = None):
-		pass
+	
 				
 	def startServer(self):
 		if self.coapServer:
@@ -109,16 +113,16 @@ class CoapServerAdapter():
 		
 			self.addResource(
                 resourcePath="/sensor/pressure",
-                resource=SensorResourceHandlers(sensorTask=PressureSensorSimTask(), dataMsgListener=self.dataMsgListener)
+                resource=PressureSensorResourceHandler(sensorTask=PressureSensorSimTask(), dataMsgListener=self.dataMsgListener)
             )
 		
 			self.addResource(
                 resourcePath="/sensor/temperature",
-                resource=SensorResourceHandlers(sensorTask=TemperatureSensorSimTask(), dataMsgListener=self.dataMsgListener)
+                resource=TemperatureSensorSimTask(sensorTask=TemperatureSensorSimTask(), dataMsgListener=self.dataMsgListener)
             )
 			self.addResource(
                 resourcePath="/sensor/humidity",
-                resource=SensorResourceHandlers(sensorTask=HumiditySensorSimTask(), dataMsgListener=self.dataMsgListener)
+                resource=HumiditySensorSimTask(sensorTask=HumiditySensorSimTask(), dataMsgListener=self.dataMsgListener)
             )
 			self.registerCallbacksWithListener()
 

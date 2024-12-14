@@ -21,7 +21,7 @@ from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
 from coapthon import defines
 from coapthon.resources.resource import Resource
 
-class GetSystemPerformanceResourceHandler(ITelemetryDataListener):
+class GetSystemPerformanceResourceHandler(ITelemetryDataListener, Resource):
 	"""
 	Observable resource that will collect system performance data based on the
 	given name from the data message listener implementation.
@@ -32,14 +32,13 @@ class GetSystemPerformanceResourceHandler(ITelemetryDataListener):
 	"""
 
 	def __init__(self, name: str = ConfigConst.SYSTEM_PERF_MSG, coap_server = None):
-		super(GetSystemPerformanceResourceHandler, self).__init__( \
-				name, coap_server, visible = True, observable = True, allow_children = True)
+		super().__init__(name, coap_server, visible=True, observable=True, allow_children=True)
 		
-		self.pollCycles = \
-			ConfigUtil().getInteger( \
-				section = ConfigConst.CONSTRAINED_DEVICE, \
-				key = ConfigConst.POLL_CYCLES_KEY, \
-				defaultVal = ConfigConst.DEFAULT_POLL_CYCLES)
+		self.pollCycles = ConfigUtil().getInteger(
+        section=ConfigConst.CONSTRAINED_DEVICE,
+        key=ConfigConst.POLL_CYCLES_KEY,
+        defaultVal=ConfigConst.DEFAULT_POLL_CYCLES
+    )
 		
 		self.sysPerfData = None
 		self.dataUtil = DataUtil()

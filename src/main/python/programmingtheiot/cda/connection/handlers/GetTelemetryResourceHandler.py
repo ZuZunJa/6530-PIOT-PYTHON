@@ -21,7 +21,7 @@ from programmingtheiot.data.SensorData import SensorData
 
 from coapthon import defines
 from coapthon.resources.resource import Resource
-class GetTelemetryResourceHandler(ITelemetryDataListener):
+class GetTelemetryResourceHandler(ITelemetryDataListener, Resource):
 	"""
 	Observable resource that will collect telemetry based on the given
 	name from the data message listener implementation.
@@ -31,8 +31,8 @@ class GetTelemetryResourceHandler(ITelemetryDataListener):
 	
 	"""
 
-	def __init__(Resource, ITelemetryDataListener):
-		def __init__(self, name: str = ConfigConst.SENSOR_MSG, coap_server = None):
+	
+	def __init__(self, name: str = ConfigConst.SENSOR_MSG, coap_server = None):
 			super(GetTelemetryResourceHandler, self).__init__( \
 				name, coap_server, visible = True, observable = True, allow_children = True)
 		
