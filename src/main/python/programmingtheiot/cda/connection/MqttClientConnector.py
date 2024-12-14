@@ -57,6 +57,8 @@ class MqttClientConnector(IPubSubClient):
 		self.pemFileName = \
 			self.config.getProperty( \
 				ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.CERT_FILE_KEY)
+		self.clientID = self.config.getProperty(
+    			ConfigConst.CONSTRAINED_DEVICE, ConfigConst.DEVICE_LOCATION_ID_KEY)
 	
 		# sets client id from piotconfig and configconst
 		if not clientID:
@@ -200,7 +202,7 @@ class MqttClientConnector(IPubSubClient):
 	
 		# publishes message, then waits for publish to complete before returning true
 		msgInfo = self.mqttClient.publish(topic = resource.value, payload = msg, qos = qos)
-		#msgInfo.wait_for_publish()
+		msgInfo.wait_for_publish()
 	
 		return True
 	
