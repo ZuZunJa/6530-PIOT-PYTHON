@@ -61,10 +61,14 @@ class MqttClientConnector(IPubSubClient):
     			ConfigConst.CONSTRAINED_DEVICE, ConfigConst.DEVICE_LOCATION_ID_KEY)
 	
 		# sets client id from piotconfig and configconst
+		
+		
 		if not clientID:
 			self.clientID = \
 				self.config.getProperty( \
 					ConfigConst.CONSTRAINED_DEVICE, ConfigConst.DEVICE_LOCATION_ID_KEY)
+		
+		
 	
 		# validates the clientID and the broker host and port
 		
@@ -130,7 +134,7 @@ class MqttClientConnector(IPubSubClient):
 		
 	def onConnect(self, client, userdata, flags, rc):
 		#logs message that says MQTT connects to broker
-		logging.info('MQTT client connected to broker: ' + str(client))
+		logging.info('[Callback] Connected to MQTT broker. Result code: ' + str(rc))
 		self.mqttClient.subscribe( \
 			topic = ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.value, qos = self.defaultQos)
 	
@@ -162,18 +166,7 @@ class MqttClientConnector(IPubSubClient):
 		logging.info('MQTT client subscribed: ' + str(client))	
 	
 	def onActuatorCommandMessage(self, client, userdata, msg):
-		"""
-		This callback is defined as a convenience, but does not
-		need to be used and can be ignored.
 		
-		It's simply an example for how you can create your own
-		custom callback for incoming messages from a specific
-		topic subscription (such as for actuator commands).
-		
-		@param client The client reference context.
-		@param userdata The user reference context.
-		@param msg The message context, including the embedded payload.
-		"""
 		logging.info('[Callback] Actuator command message received. Topic: %s.', msg.topic)
 	
 		if self.dataMsgListener:
@@ -202,7 +195,7 @@ class MqttClientConnector(IPubSubClient):
 	
 		# publishes message, then waits for publish to complete before returning true
 		msgInfo = self.mqttClient.publish(topic = resource.value, payload = msg, qos = qos)
-		msgInfo.wait_for_publish()
+		#msgInfo.wait_for_publish()
 	
 		return True
 	
